@@ -472,9 +472,11 @@ const PENDING = { "은사시원": true, "봄꽃원": true };
 // 조사가 끝나 QGIS 자료가 바뀌면 여기서 지운다
 const SURVEYING = {
   "사계화원": "주제원 수목 조사 중입니다.",
-  "은사시원": "주제원 조성 중입니다.", "과수원": "주제원 조성 중입니다.", "재배장(조성 중)": "주제원 조성 중입니다.",
-  "봄꽃원": "주제원 조성 중입니다."
+  "은사시원": "현재 조성 중인 주제원입니다.", "과수원": "현재 조성 중인 주제원입니다.", "재배장(조성 중)": "현재 조성 중인 주제원입니다.",
+  "봄꽃원": "현재 조성 중인 주제원입니다."
 };
+// 조성 중인 주제원은 항공사진에 옅게 표시하고 공사 전 나무 점은 숨긴다(2026-11-01 사용자). QField 자료의 점은 지우지 않는다.
+const isBuilding = id => /조성/.test(SURVEYING[id] || "");
 
 // Illustration position → registry metres, from an affine fitted on 14 labels whose
 // area kept both its name and its shape (residual under 5 m across the park).
@@ -554,8 +556,16 @@ const REMAP = [
   // 월가든2 아래 흰 천막(반원 쉼터) 울타리 안 팽나무는 사계화원(2026-10-28 사용자)
   { from: "월가든", to: "사계화원", x: 378.4, y: 1072.8, r: 2, only: ["팽나무"] },
   // 동물원 잔디밭 남동쪽 길가 비탈(팽나무 5그루)은 동물원(2026-10-28 사용자)
-  { from: "녹지대", to: "동물원", poly: [[610.1, 715.8], [605.8, 704.1], [592.5, 707.6], [579.8, 720.2], [583.2, 729.6], [592.4, 732.9], [601.0, 723.7]] }
+  { from: "녹지대", to: "동물원", poly: [[610.1, 715.8], [605.8, 704.1], [592.5, 707.6], [579.8, 720.2], [583.2, 729.6], [592.4, 732.9], [601.0, 723.7]] },
+  // 은사시원 부지 안 나무 11그루가 무궁화동산 면에 걸려 있었다 — 은사시원으로 센다(2026-11-01 사용자)
+  { from: "봄꽃원", to: "은사시원", poly: [[702.4, 913.1], [702.8, 889.1], [705.1, 886], [709.9, 882.1], [717.3, 878.6], [744.9, 865.9], [748.5, 870.1], [761.4, 885.3], [766, 891.3], [774.2, 904.3], [780.6, 915.1], [789, 931.1], [803.2, 958.8], [811.1, 975.4], [814.9, 983.5], [820.8, 997.9], [824, 1006.6], [825.2, 1010.9], [812, 1027.4], [805.9, 1033.9], [803.7, 1036.1], [799.3, 1040.6], [796.7, 1042.9], [784.6, 1050.6]] }
 ];
+// 조성 중 부지(2026-11-01 사용자 그림). 이 안은 항공사진에 옅게 덮고 공사 전 나무 점을 숨긴다
+// 북쪽 부지는 재배장·과수원·은사시원을 한 덩어리로 그렸다
+const NORTH_SITE = [[834.9, 1032], [798.1, 948], [780.3, 920.3], [767.1, 894.7], [751, 873.1], [741, 868], [732, 867], [692, 881.6], [676.6, 891], [676, 896], [693.2, 907.6], [730.9, 955.6], [776.6, 1033.4], [801.3, 1109.3], [807, 1138.1], [808.4, 1163.1], [815.1, 1176.1], [850.4, 1173.8], [851, 1150], [850, 1125], [848, 1100], [845, 1075], [841, 1050]];
+const SITE_POLY = {
+  "봄꽃원": [[368.5, 940.3], [366.3, 937], [322, 929.5], [309, 926.5], [287.9, 916.1], [281.8, 905.1], [275.7, 899.7], [271.8, 888.9], [269.6, 868.8], [255.4, 832.7], [252.4, 827.1], [240.8, 817.6], [237.2, 807.7], [233.7, 803.4], [196.5, 839.8], [203.2, 844.5], [217.2, 857.8], [226, 873.5], [234.6, 897.3], [247.6, 916], [257.4, 922.1], [275.5, 941], [303, 960.6], [346.9, 983.3], [351.6, 976.5], [357.7, 961], [367.9, 952.7], [366.9, 944.4]]
+};
 for (const m of REMAP) if (m.x == null && !m.ring && !m.poly) { const p = SPOT_XY[m.to]; m.x = p[0]; m.y = p[1]; }
 // 나무 자리(좌표) → 옮겨 셀 주제원. 자료를 읽을 때 한 번 만든다(buildRemap)
 let REMAP_AT = new Map();
@@ -592,6 +602,7 @@ const SPLIT_POLY = {
   // 무궁화동산: 두 큰길 사이 물길 띠까지 무궁화동산, 바깥 큰길 너머만 은사시원(2026-10-27 사용자 그림). 면 밖은 가까운 이름표
   "봄꽃원": { polys: [["무궁화동산", [[613.2,1070.9],[732.3,1077.8],[775.7,1057.7],[769.3,1014.0],[752.1,976.0],[729.6,946.3],[666.7,955.8],[642.1,957.9],[617.8,973.2],[598.4,1017.5]]]], rest: null }
 };
+const SITE_AREAS = [NORTH_SITE, SITE_POLY["봄꽃원"]];
 const inPoly = (x, y, ring) => {
   let ok = false;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
@@ -865,7 +876,7 @@ class Component extends DCLogic {
         const mu = ds.reduce((a, b) => a + b, 0) / ds.length;
         const sd = Math.sqrt(ds.reduce((a, b) => a + (b - mu) ** 2, 0) / ds.length);
         const keep = pts.filter((p, i) => ds[i] <= mu + 2.2 * sd);
-        const hull = this.hull(keep.length > 6 ? keep : pts);
+        const hull = SITE_POLY[id] || this.hull(keep.length > 6 ? keep : pts);
         if (hull.length < 3) continue;
         let a = 0;
         for (let i = 0, j = hull.length - 1; i < hull.length; j = i++)
@@ -1103,6 +1114,20 @@ class Component extends DCLogic {
     return pick;
   }
 
+  // 항공사진에서 숨기는 나무: 조성 중 부지 안, 재배장·과수원·은사시원·봄꽃원으로 잡힌 나무,
+  // 과수원 위쪽 길가 메타세쿼이아(2026-11-01 사용자)
+  buildingRows(d) {
+    if (this._buildingOf !== d) {
+      this._buildingOf = d;
+      const meta = d.names.indexOf("메타세쿼이아");
+      this._buildingRows = new Set(d.d.filter(r => r[0] != null && (
+        // 봄꽃원은 공사 시작선 안쪽만 숨긴다(2026-11-02 사용자)
+        SITE_AREAS.some(a => inPoly(r[0], r[1], a)) || (isBuilding(zoneOf(d.gardens, r)) && zoneOf(d.gardens, r) !== "봄꽃원")
+        || (r[3] === meta && r[0] >= 835 && r[1] >= 1000 && r[1] <= 1135))));
+    }
+    return this._buildingRows;
+  }
+
   // what the satellite view highlights right now (distinct from rowsFor(id))
   visibleRows() {
     const d = this.state.data; if (!d) return [];
@@ -1110,7 +1135,8 @@ class Component extends DCLogic {
     if (sp) {
       const si = d.names.indexOf(sp);
       if (si < 0) return [];
-      let rows = d.d.filter(r => r[3] === si && r[0] != null);
+      const hidden = this.buildingRows(d);
+      let rows = d.d.filter(r => r[3] === si && r[0] != null && !hidden.has(r));
       // 정원을 하나 짚었으면 그 정원에 있는 그 수종만 남긴다
       const w = this.state.spWhere;
       if (w) { const inG = rows.filter(r => this.labelOf(r) === w); if (inG.length) rows = inG; }
@@ -1239,6 +1265,8 @@ class Component extends DCLogic {
       } else if (a.length === 1) {
         const dx = e.clientX - st.x, dy = e.clientY - st.y;
         this._moved = Math.max(this._moved || 0, Math.hypot(dx, dy));
+        // 끄는 중에는 커서가 지도 밖으로 나가도 끊기지 않게 잡아 둔다. 그냥 누르기는 잡지 않아야 클릭이 살아 있다
+        if (this._moved > 4) { try { el.setPointerCapture(e.pointerId); } catch (_) {} }
         // 전체 보기에서는 끌 여유가 없으니 확대된 상태에서만 지도를 민다
         // 항공사진은 전체 보기에서도 사진 범위 안에서 끌 수 있다
         if (st.nav.k > 1.01 || this.state.base === "photo")
@@ -1431,6 +1459,14 @@ class Component extends DCLogic {
       }
       g.globalAlpha = 1;
     }
+    // 조성 중 부지만 옅은 주황으로 덮는다
+    for (const area of SITE_AREAS) {
+      g.beginPath();
+      area.forEach((p, i) => { const q = v.p(p[0], p[1]); i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); });
+      g.closePath();
+      g.fillStyle = "rgba(240,150,50,.30)"; g.fill();
+      g.strokeStyle = "rgba(240,150,50,.85)"; g.lineWidth = 1.5; g.stroke();
+    }
 
     // every registered tree as a quiet dot, so the satellite view reads as a
     // planting map at a glance; the selection is drawn over it in red
@@ -1442,8 +1478,9 @@ class Component extends DCLogic {
     g.lineWidth = base > 2.6 ? 1 : 0.7;
     // 수종마다 다른 색. 같은 색끼리 묶어 그려야 채색 전환이 점 수만큼 일어나지 않는다
     const buckets = new Map();
+    const building = this.buildingRows(d);
     for (const r of d.d) {
-      if (r[0] == null || pick.has(r)) continue;
+      if (r[0] == null || pick.has(r) || building.has(r)) continue;
       const q = v.p(r[0], r[1]), x = q[0], y = q[1];
       if (x < -6 || x > cw + 6 || y < -6 || y > ch + 6) continue;
       // 수종마다 다른 색(한 색으로 바꿔 봤다가 사용자가 원래대로, 2026-10-28)
@@ -1526,7 +1563,7 @@ class Component extends DCLogic {
       const queue = this._satLabels.slice()
         .sort((a, b) => (b.id === sel) - (a.id === sel) || b.n - a.n);
       for (const z of queue) {
-        const name = z.name;
+        const name = isBuilding(z.id) ? z.name + " (조성 중)" : z.name;
         const cx = z.cx, cy = z.cy;
         const q = v.p(cx, cy), x = q[0];
         let y = q[1];
@@ -1588,8 +1625,9 @@ class Component extends DCLogic {
     // 등록된 모든 나무가 언제나 클릭 대상이다 — 점을 눌렀는데 반응이 없는 상태를 없앤다
     {
       let t = null, td = 12 * 12;
+      const building = this.buildingRows(d);
       for (const r of d.d) {
-        if (r[0] == null) continue;
+        if (r[0] == null || building.has(r)) continue;
         const dd = (r[0] - X) ** 2 + (r[1] - Y) ** 2;
         if (dd < td) { td = dd; t = r; }
       }
