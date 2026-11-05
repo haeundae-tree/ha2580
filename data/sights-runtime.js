@@ -13,7 +13,6 @@ window.applySightsSettings = function () {
       const months = window[variable] || (window[variable] = {});
       for (let m = 1; m <= 12; m++) months[m] = update(months[m] || [], name, value[field].includes(m));
     }
-    window.BANNER_FLOWER_HIDE = update(window.BANNER_FLOWER_HIDE || [], name, !value.show);
     if (!(window.SPECIES_GUIDE[name] || {}).guide) window.BANNER_EXTRA = update(window.BANNER_EXTRA || [], name, true);
   }
 };
