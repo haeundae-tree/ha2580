@@ -28,6 +28,7 @@
 <x-dc>
 <helmet>
 <script src="data/trees.js"></script>
+<script src="data/공사중구역.js"></script>
 <script src="data/bloom-survey.js"></script>
 <script src="data/bloom-guide.js"></script>
 <script src="data/photo-credits.js"></script>
@@ -463,20 +464,29 @@ const SPOTS = [
   { id: "편백원", name: "편백원", src: "편백원", x: .583, y: .848 },
   { id: "난대림원", name: "난대림원", src: "난대림원", x: .275, y: .851 },
   { id: "생태습지원", name: "생태습지원", src: "생태습지원", x: .813, y: .859 },
-  { id: "진입광장", name: "진입광장", src: "진입광장", x: .942, y: .900 }
+  { id: "진입광장", name: "진입광장", src: "진입광장", x: .942, y: .900 },
+  // 남쪽 운동시설 부지 주제원(2026-11-04 사용자). 안내도 그림에는 없어 항공사진에서만 보이고 눌린다(aerial)
+  // 가족마당(운동시설)은 수목원 안 가족마당과 다른 곳 — 자료 이름은 따로, 화면 이름은 가족마당
+  { id: "운동시설", name: "운동시설", src: "운동시설", x: 1.1998, y: 0.8443, aerial: true },
+  { id: "꿈의놀이터", name: "꿈의놀이터", src: "꿈의놀이터", x: 1.1588, y: 0.7104, aerial: true },
+  { id: "물의정원", name: "물의정원", src: "물의정원", x: 1.0969, y: 0.6897, aerial: true },
+  { id: "가족마당(운동시설)", name: "가족마당", src: "가족마당(운동시설)", x: 1.209, y: 0.6148, aerial: true },
+  { id: "잔디마당", name: "잔디마당", src: "잔디마당", x: 1.3023, y: 0.64, aerial: true },
+  { id: "파크골프장", name: "파크골프장", src: "파크골프장", x: 1.4082, y: 0.841, aerial: true },
+  { id: "대나무군락지", name: "대나무군락지", src: "대나무군락지", x: 1.4639, y: 0.7265, aerial: true },
+  { id: "만남의 광장", name: "만남의 광장", src: "만남의 광장", x: 1.5391, y: 0.65, aerial: true },
 ];
 
 // 조성 중 on the drawing — say so rather than describing a planting that isn't there
 const PENDING = { "은사시원": true, "봄꽃원": true };
-// 공사 중이거나 공사 뒤 나무를 다시 조사하는 주제원 — 대장 나무를 보여 주지 않고 이 한 줄만 보인다(2026-10-24).
-// 공사 중(은사시원·과수원·과수원 옆 재배장·봄꽃원)은 '조성 중', 공사를 마치고 다시 조사하는 사계화원은 '수목 조사 중'
-// 조사가 끝나 QGIS 자료가 바뀌면 여기서 지운다
-const SURVEYING = {
-  "사계화원": "주제원 수목 조사 중입니다.",
-  "은사시원": "현재 조성 중인 주제원입니다.", "과수원": "현재 조성 중인 주제원입니다.", "재배장(조성 중)": "현재 조성 중인 주제원입니다.",
-  "봄꽃원": "현재 조성 중인 주제원입니다."
-};
-// 조성 중인 주제원은 항공사진에 옅게 표시하고 공사 전 나무 점은 숨긴다(2026-11-01 사용자). QField 자료의 점은 지우지 않는다.
+// 공사 중인 주제원은 data/공사중구역.js(메모장으로 고치는 이름 목록)에서 읽는다(2026-11-04 사용자).
+// 거기 적힌 주제원은 '조성 중'으로 보이고 공사 전 나무 점은 숨긴다. 공사가 끝나면 그 줄을 지우면 나무가 다시 보인다.
+// 안내도 이름(SPOTS name)이나 id로 적는다 — '은사시원' 한 줄이 은사시원·과수원·재배장(조성 중)을 함께 묶는다
+// 사계화원은 공사를 마쳐 QField 경계 안 나무를 바로 보여 준다(2026-11-04 사용자)
+const BUILDING = new Set(String(window.CONSTRUCTION || "").split(/\r?\n/)
+  .map(s => s.trim()).filter(s => s && !s.startsWith("//")));
+const SURVEYING = {};
+for (const s of SPOTS) if (BUILDING.has(s.name) || BUILDING.has(s.id)) SURVEYING[s.id] = "현재 조성 중인 주제원입니다.";
 const isBuilding = id => /조성/.test(SURVEYING[id] || "");
 
 // Illustration position → registry metres, from an affine fitted on 14 labels whose
@@ -525,7 +535,8 @@ const WALK_MIN = { "가을원": "10", "세움정원": "8", "난대림원": "15",
 // 남쪽 운동시설 부지 시설 이름 — 종이 안내도(해운대수목원 리플릿) 이름 그대로, 항공사진 위에만 글자로 단다(2026-10-28 사용자)
 // 좌표는 나무와 같은 상대 좌표(m). 눌리지 않는다. 리플릿 이름 그대로 — 운동장 동쪽 '가족마당'은 수목원 안 주제원 가족마당과 다른 곳이지만 이름은 리플릿대로(사용자)
 // 가족마당 이름표는 물의정원 위 길 건너 북동쪽 빈 잔디 자리로 옮김(2026-10-29 사용자 항공사진 표시)
-const FAC_LABELS = [["주차장", 115.6, 646.6], ["농구장", -3.9, 637.6], ["족구장", 5.1, 595.8], ["게이트볼장", -0.9, 559.9], ["테니스장", -18.9, 455.4], ["배드민턴장", 5.1, 413.5], ["축구장", 91.7, 506.2], ["풋살장", 97.7, 406.4], ["꿈의 놀이터", 187.3, 509.1], ["물의정원", 226.2, 551.0], ["가족마당", 262.4, 398.9], ["잔디마당", 175.4, 341.8], ["파크골프장", 20.0, 300.0], ["대나무군락지", 37.9, 186.4], ["만남의 광장", 31.9, 141.6]];
+const FAC_LABELS = [["주차장", 115.6, 646.6], ["농구장", -3.9, 637.6], ["족구장", 5.1, 595.8], ["게이트볼장", -0.9, 559.9], ["테니스장", -18.9, 455.4], ["배드민턴장", 5.1, 413.5], ["축구장", 91.7, 506.2], ["풋살장", 97.7, 406.4]];
+// 꿈의놀이터·물의정원·가족마당·잔디마당·파크골프장·대나무군락지·만남의 광장은 2026-11-04부터 주제원(SPOTS, aerial)
 
 // facilities printed on the 안내도 that belong to a larger garden and carry no
 // records of their own: label them, but don't let a visitor open a dead panel
@@ -566,6 +577,9 @@ const REMAP = [
 // 조성 중 부지(2026-11-01 사용자 그림). 이 안은 항공사진에 옅게 덮고 공사 전 나무 점을 숨긴다
 // 북쪽 부지는 재배장·과수원·은사시원을 한 덩어리로 그렸다
 const NORTH_SITE = [[834.9, 1032], [798.1, 948], [780.3, 920.3], [767.1, 894.7], [751, 873.1], [741, 868], [732, 867], [692, 881.6], [676.6, 891], [676, 896], [693.2, 907.6], [730.9, 955.6], [776.6, 1033.4], [801.3, 1109.3], [807, 1138.1], [808.4, 1163.1], [815.1, 1176.1], [850.4, 1173.8], [851, 1150], [850, 1125], [848, 1100], [845, 1075], [841, 1050]];
+// 남쪽 운동시설 부지 주제원 경계(상대 좌표 m). QGIS 주제원 경계(name_guidemap '운동시설 부지')와 같다. 항공사진 누르는 범위로 쓴다
+const SOUTH_ZONES = {"운동시설":[[[43.1,581.8],[35.1,562.8],[29.6,544.3],[26.1,512.8],[27.1,474.3],[31.6,450.3],[39.1,425.8],[49.6,405.8],[57.6,396.3],[80.6,379.3],[93.1,373.8],[114.1,373.3],[131.6,378.8],[145.6,387.3],[156.1,398.3],[165.6,412.8],[169.6,424.3],[173.6,449.8],[169.1,485.8],[167.1,522.8],[165.1,534.3],[161.1,543.8],[149.1,561.3],[136.1,574.3],[114.1,585.8],[102.6,586.8],[93.6,581.3],[74.6,576.3],[62.6,577.3]],[[-20.9,662.3],[-18.9,594.3],[-32.4,514.3],[-41.4,474.3],[-59.4,377.8],[-15.9,370.3],[4.6,363.3],[9.1,365.3],[9.1,362.3],[16.1,361.3],[75.1,360.8],[91.6,361.8],[103.1,364.8],[103.6,366.3],[96.1,366.8],[73.1,375.8],[56.6,388.3],[41.6,405.8],[36.6,415.8],[26.1,442.8],[26.6,445.3],[23.1,455.8],[19.6,496.3],[20.1,519.8],[27.6,559.8],[35.1,580.3],[57.1,629.8],[12.6,646.3]]],"꿈의놀이터":[[[168.1,552.3],[166.6,550.8],[175.6,510.3],[174.1,486.8],[176.1,467.8],[179.6,451.8],[182.1,450.3],[198.1,466.8],[210.1,482.3],[216.1,501.3],[214.1,519.3],[203.6,536.8],[191.1,546.8],[185.6,549.3]]],"물의정원":[[[200.6,637.3],[185.6,597.8],[176.6,581.8],[170.6,584.3],[167.1,567.3],[168.6,557.8],[185.1,553.8],[201.1,545.3],[226.1,515.3],[232.1,498.3],[297.1,494.3],[299.6,512.3],[300.1,532.3],[290.6,547.8],[270.1,561.3],[243.1,582.8],[218.1,612.8],[211.6,624.8]]],"가족마당(운동시설)":[[[220.1,512.3],[220.1,501.3],[216.1,484.8],[206.6,469.8],[180.6,441.3],[175.6,420.8],[166.6,398.3],[185.6,387.8],[201.1,381.3],[220.1,363.3],[231.6,345.3],[235.6,330.3],[238.1,328.8],[252.1,336.3],[280.6,365.3],[285.6,382.3],[285.1,444.3],[297.6,493.3],[232.1,497.8],[227.6,500.3],[224.6,508.3]]],"잔디마당":[[[211.1,365.3],[191.1,378.8],[164.1,391.3],[160.6,390.8],[130.1,370.3],[107.6,366.3],[111.6,270.3],[145.6,280.3],[172.1,282.3],[195.1,295.8],[213.1,309.3],[231.6,316.3],[226.6,340.3],[219.1,355.8]]],"파크골프장":[[[-59.9,377.3],[-63.9,357.8],[-63.9,352.3],[-58.9,346.3],[-57.9,342.8],[-62.4,314.3],[-61.9,300.8],[-57.4,281.3],[-46.9,250.3],[-36.4,233.8],[-27.9,224.3],[-15.9,219.3],[-4.4,219.8],[71.6,244.8],[100.1,249.8],[121.6,257.3],[118.1,268.3],[116.1,270.3],[111.6,269.8],[110.6,272.8],[107.1,365.3],[85.6,360.8],[16.1,360.8]]],"대나무군락지":[[[158.6,258.8],[101.6,242.3],[70.6,236.3],[16.6,218.8],[-6.9,204.8],[-26.4,199.3],[-30.4,184.3],[-27.9,156.8],[-0.4,145.3],[9.6,142.8],[70.6,165.8],[87.6,174.3],[106.6,192.3],[111.6,199.3],[113.6,205.3],[112.6,212.8],[128.1,221.3],[144.6,235.3]]],"만남의 광장":[[[143.1,229.8],[114.6,211.8],[115.6,203.8],[113.6,196.3],[109.6,189.3],[99.1,179.3],[76.1,164.8],[40.1,148.8],[32.6,140.8],[30.6,135.8],[31.6,124.8],[35.6,114.8],[39.1,71.3],[40.6,63.3],[43.6,57.3],[40.1,51.3],[53.1,34.8],[68.1,9.8],[76.1,-0.7],[83.1,-6.2],[88.6,-7.7],[102.1,-4.2],[110.1,-0.2],[111.1,2.3],[110.1,8.8],[97.1,34.8],[86.6,61.3],[85.6,88.3],[90.1,121.8],[99.1,156.8],[115.1,185.8],[122.6,193.8]]]};
+const inSouth = (id, x, y) => (SOUTH_ZONES[id] || []).some(r => inPoly(x, y, r));
 const SITE_POLY = {
   // 사계화원 부지(2026-11-02 사용자 그림)
   "사계화원": [[441.8, 1044], [398.5, 1056.4], [388.4, 1052.9], [379.5, 1052.8], [375.2, 1049.2], [370.5, 1050.1], [374, 1059.8], [373.5, 1065.5], [382.4, 1089.8], [390.5, 1104.1], [406.6, 1147], [409.5, 1175.9], [412.5, 1186.7], [409, 1195.6], [412.8, 1206], [419.7, 1208.6], [431.8, 1205.9], [443.2, 1208.1], [449.8, 1214.6], [456.1, 1225], [461.9, 1229.2], [464.9, 1235.3], [473.2, 1238.2], [474.8, 1238.0], [484.1, 1225.4], [484.9, 1210.7], [477.1, 1192.8], [479.1, 1185.2], [478.0, 1170.0], [471.2, 1145.7], [451.3, 1126.2], [443.0, 1107.9], [447.2, 1091.7], [453.5, 1080.8], [455.7, 1068.2], [453.0, 1056.8], [446.0, 1043.8]],
@@ -607,7 +621,8 @@ const SPLIT_POLY = {
   // 무궁화동산: 두 큰길 사이 물길 띠까지 무궁화동산, 바깥 큰길 너머만 은사시원(2026-10-27 사용자 그림). 면 밖은 가까운 이름표
   "봄꽃원": { polys: [["무궁화동산", [[613.2,1070.9],[732.3,1077.8],[775.7,1057.7],[769.3,1014.0],[752.1,976.0],[729.6,946.3],[666.7,955.8],[642.1,957.9],[617.8,973.2],[598.4,1017.5]]]], rest: null }
 };
-const SITE_AREAS = [NORTH_SITE, SITE_POLY["봄꽃원"]];
+// 공사 부지 그림 — 공사중구역.js에 그 이름이 있을 때만 그 안의 공사 전 나무 점을 숨긴다
+const SITE_AREAS = [BUILDING.has("은사시원") && NORTH_SITE, BUILDING.has("봄꽃원") && SITE_POLY["봄꽃원"]].filter(Boolean);
 const inPoly = (x, y, ring) => {
   let ok = false;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
@@ -625,6 +640,7 @@ const splitPoly = (garden, x, y) => {
 // registry garden + position → the 안내도 label it now belongs to
 function labelFor(garden, x, y) {
   const re = REMAP_AT.get(x + "," + y); if (re) return re;
+  if (garden === "운동시설" && !inSouth("운동시설", x, y)) return "녹지대";
   const pl = splitPoly(garden, x, y); if (pl) return pl;
   const group = SPLIT[garden];
   if (group) {
@@ -717,13 +733,22 @@ class Component extends DCLogic {
     window.addEventListener("focus", this._onPub);
   }
 
-  // 항공사진(약 3.5MB)은 「항공사진」 단추를 처음 눌렀을 때 받는다 —
+  // 항공사진(가벼운 판 약 0.7MB)은 「항공사진」 단추를 처음 눌렀을 때 받는다 —
   // 안내도만 보고 가는 관람객은 받지 않아도 되므로 첫 화면이 가벼워진다
+  loadOrthoFull() {
+    if (this._orthoFullStarted || !this._onDrone) return;
+    this._orthoFullStarted = true;
+    const im = new Image();
+    im.onload = () => { this._satFull = true; this._onDrone(im); };
+    im.src = "assets/ortho-1023-web.webp";
+  }
+
   loadOrtho() {
     if (this._orthoStarted) return;
     this._orthoStarted = true;
-    const im = new Image();
-    const onDrone = () => {
+    // 드론사진은 두 단계로 받는다(2026-11-05 성수기 전송량 대비) — 먼저 가벼운 판(약 0.7MB)을 보여 주고,
+    // 크게 확대해 가벼운 판이 모자랄 때만 선명한 판(약 2.6MB)을 받아 바꿔 끼운다(draw의 loadOrthoFull)
+    const onDrone = im => {
       SAT.gs = 0.508 * 2480 / im.naturalWidth;
       const mips = [im];
       let src = im, w = im.naturalWidth, h = im.naturalHeight;
@@ -738,7 +763,9 @@ class Component extends DCLogic {
       }
       im._mips = mips; this._sat = im; this.draw();
     };
-    im.onload = onDrone; im.src = "assets/ortho-1023-web.webp";
+    this._onDrone = onDrone;
+    const im = new Image();
+    im.onload = () => { if (!this._satFull) onDrone(im); }; im.src = "assets/ortho-1023-small.webp";
 
     // 드론사진은 수목원 주변에서 끝난다 — 그 바깥(운동시설·마을·산)은
     // 더 넓게 찍힌 위성사진을 밑에 깔아 이어 준다
@@ -870,6 +897,7 @@ class Component extends DCLogic {
     const out = [];
     const seen = new Map();
     for (const [id, all] of groups) {
+      if (SOUTH_ZONES[id]) continue;   // 아래에서 그린 경계로 넣는다
       if (all.length < 8) continue;
       // 난대림원·장미원·가을원 등은 안내도에 두 곳으로 나뉘어 있다. 한 덩어리로 감싸면
       // 두 패치 사이의 무관한 땅까지 폴리곤이 덮으므로, 붙어 있는 무리별로 나눈다
@@ -888,6 +916,16 @@ class Component extends DCLogic {
           a += hull[j][0] * hull[i][1] - hull[i][0] * hull[j][1];
         const ci = seen.has(id) ? seen.get(id) : (seen.set(id, seen.size), seen.get(id));
         out.push({ id, hull, n: all.length, ci, area: Math.abs(a) / 2 });
+      }
+    }
+    // 남쪽 운동시설 부지 주제원 — QGIS 경계를 그대로 누르는 범위로(2026-11-04)
+    for (const [id, rings] of Object.entries(SOUTH_ZONES)) {
+      const n = (groups.get(id) || []).length;
+      const ci = seen.has(id) ? seen.get(id) : (seen.set(id, seen.size), seen.get(id));
+      for (const hull of rings) {
+        let a = 0;
+        for (let i = 0, j = hull.length - 1; i < hull.length; j = i++) a += hull[j][0] * hull[i][1] - hull[i][0] * hull[j][1];
+        out.push({ id, hull, n, ci, area: Math.abs(a) / 2 });
       }
     }
     return out.sort((a, b) => b.n - a.n);
@@ -1128,7 +1166,7 @@ class Component extends DCLogic {
       this._buildingRows = new Set(d.d.filter(r => r[0] != null && (
         // 봄꽃원은 공사 시작선 안쪽만 숨긴다(2026-11-02 사용자)
         SITE_AREAS.some(a => inPoly(r[0], r[1], a)) || (isBuilding(zoneOf(d.gardens, r)) && zoneOf(d.gardens, r) !== "봄꽃원")
-        || (r[3] === meta && r[0] >= 835 && r[1] >= 1000 && r[1] <= 1135))));
+        || (BUILDING.has("은사시원") && r[3] === meta && r[0] >= 835 && r[1] >= 1000 && r[1] <= 1135))));
     }
     return this._buildingRows;
   }
@@ -1439,6 +1477,8 @@ class Component extends DCLogic {
       g.save();
       g.filter = "saturate(1.5) contrast(1.16) brightness(1.04)";
       g.beginPath(); g.rect(tx, ty, nw - tx * 2, nh - ty * 2); g.clip();
+      // 가벼운 판보다 더 크게 보일 만큼 확대하면 선명한 판을 받기 시작한다
+      if (!this._satFull && iw * sx * dpr > nw * 1.15) this.loadOrthoFull();
       g.drawImage(this.mipFor(this._sat, iw * sx * dpr), 0, 0, nw, nh);
       g.restore();
       g.restore();
@@ -1464,15 +1504,6 @@ class Component extends DCLogic {
       }
       g.globalAlpha = 1;
     }
-    // 조성 중 부지만 옅은 주황으로 덮는다
-    for (const area of SITE_AREAS) {
-      g.beginPath();
-      area.forEach((p, i) => { const q = v.p(p[0], p[1]); i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); });
-      g.closePath();
-      g.fillStyle = "rgba(240,150,50,.30)"; g.fill();
-      g.strokeStyle = "rgba(240,150,50,.85)"; g.lineWidth = 1.5; g.stroke();
-    }
-
     // every registered tree as a quiet dot, so the satellite view reads as a
     // planting map at a glance; the selection is drawn over it in red
     const rows = this.visibleRows();
@@ -1743,8 +1774,8 @@ class Component extends DCLogic {
     const sp = SPOTS.find(s => s.id === id);
     const src = sp ? sp.src : id;
     if (!src) return [];
-    const gi = d.gardens.indexOf(src);
-    return gi >= 0 ? d.d.filter(r => r[2] === gi && r[0] != null) : [];
+    const gi = d.gardens.indexOf(src), gi2 = src !== id ? d.gardens.indexOf(id) : -1;
+    return gi >= 0 || gi2 >= 0 ? d.d.filter(r => (r[2] === gi || r[2] === gi2) && r[0] != null) : [];
   }
 
   // which 안내도 label a single tree now falls under
@@ -2369,7 +2400,7 @@ class Component extends DCLogic {
               : (this.state.species === ROSE && this.state.roseSel ? "장미 '" + this.state.roseSel + "' 화단을 붉은 점으로 표시했습니다" : this.state.species + " 위치를 붉은 점으로 표시했습니다"))
             : this.state.garden ? ((SPOTS.find(s => s.id === this.state.garden) || {}).name || this.state.garden) + " · 다시 누르면 선택이 해제됩니다"
                                 : "주제원을 눌러 안내를 확인하세요")),
-      spots: SPOTS.map(s => {
+      spots: SPOTS.filter(s => !s.aerial).map(s => {
         const id = s.id;
         const on = !viewSpecies && id === this.state.garden;
         // 수종을 고르면 그 나무가 있는 정원을 안내도에 주(株)수와 함께 표시한다
@@ -2541,7 +2572,7 @@ class Component extends DCLogic {
         fontSize: "12px", color: "#798C84", flexWrap: "wrap"
       },
       totalSpecies: d ? counts.size : "—",
-      dataNote: "자료 기준 2026. 3."
+      dataNote: "자료 기준 2026. 11."
     };
   }
 }
