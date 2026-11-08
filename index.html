@@ -1966,9 +1966,8 @@ class Component extends DCLogic {
       if (e.origin) facts.push({ k: "원산지", v: e.origin });
       // 위치도에 아직 없는 나무(올해 심은 나무 등)는 0주 대신 준비 중이라고 알린다
       const roseCv = name === ROSE && window.ROSES ? window.ROSES.cv : null;
-      facts.push(roseCv
-        ? { k: "장미원", v: Object.keys(roseCv).length + "품종 · " + (counts.get(name) || 0) + "화단" }
-        : { k: "등록 수목", v: counts.get(name) ? counts.get(name).toLocaleString() + "주" : "위치 정보 준비 중" });
+      // 장미는 「몇 품종 · 몇 화단」 숫자를 보이지 않는다(2026-11-09 사용자) — 품종 목록만
+      if (!roseCv) facts.push({ k: "등록 수목", v: counts.get(name) ? counts.get(name).toLocaleString() + "주" : "위치 정보 준비 중" });
       sp = {
         name, sci: e.sci || "학명 정리 중", sciParts: this.sciParts(e.sci || "학명 정리 중"), fam: e.fam || "",
         // 출처가 없는 수종은 출처 줄을 아예 숨긴다 — "출처 확인 전"을 관람객에게 보이지 않는다(2026-10-24)
@@ -2024,7 +2023,7 @@ class Component extends DCLogic {
         hasLowNote: name !== ROSE && counts.get(name) > 0 && counts.get(name) < 5,
         // 장미 품종 목록 — 누르면 항공사진에서 그 품종 화단만 붉게(다시 누르면 전체)
         hasRoses: !!roseCv,
-        roseNote: roseCv ? "품종을 누르면 항공사진에서 그 장미가 심긴 화단을 보여 드려요. 화단 기록은 " + window.ROSES.src + " 기준이라 지금과 다를 수 있어요." : "",
+        roseNote: roseCv ? "품종을 누르면 항공사진에서 그 장미가 심긴 화단을 보여 드려요." : "",  // 조사 날짜 안내는 빼기로 함(2026-11-09 사용자)
         roses: roseCv ? Object.keys(roseCv).sort((a, b) => a.localeCompare(b, "ko")).map(c => {
           const on = this.state.roseSel === c, v = roseCv[c] || {};
           const nb = [...this._roseOf.values()].filter(cv => cv.includes(c)).length;
