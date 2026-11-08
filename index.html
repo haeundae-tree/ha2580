@@ -899,7 +899,7 @@ class Component extends DCLogic {
         if (!SPOT_XY[id]) continue;          // 녹지대·교통섬처럼 안내도에 없는 이름은 테두리를 안 그린다
         for (let i = 0, j = hull.length - 1; i < hull.length; j = i++) a += hull[j][0] * hull[i][1] - hull[i][0] * hull[j][1];
         const ci = seen.has(id) ? seen.get(id) : (seen.set(id, seen.size), seen.get(id));
-        out.push({ id, hull, n: (groups.get(id) || []).length, ci, area: Math.abs(a) / 2 });
+        out.push({ id, hull, holes: z.h || [], n: (groups.get(id) || []).length, ci, area: Math.abs(a) / 2 - (z.h || []).reduce((sum,h) => { let a=0; for(let i=0,j=h.length-1;i<h.length;j=i++) a+=h[j][0]*h[i][1]-h[i][0]*h[j][1]; return sum+Math.abs(a)/2; },0) });
       }
       return out.sort((a, b) => b.n - a.n);
     }
@@ -922,7 +922,7 @@ class Component extends DCLogic {
         for (let i = 0, j = hull.length - 1; i < hull.length; j = i++)
           a += hull[j][0] * hull[i][1] - hull[i][0] * hull[j][1];
         const ci = seen.has(id) ? seen.get(id) : (seen.set(id, seen.size), seen.get(id));
-        out.push({ id, hull, n: all.length, ci, area: Math.abs(a) / 2 });
+        out.push({ id, hull, holes: [], n: all.length, ci, area: Math.abs(a) / 2 });  // 경계 자료가 없을 때의 예비 테두리 — 빈 공간 없음
       }
     }
     return out.sort((a, b) => b.n - a.n);
@@ -1494,8 +1494,11 @@ class Component extends DCLogic {
         g.beginPath();
         z.hull.forEach((p, i) => { const q = v.p(p[0], p[1]); i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); });
         g.closePath();
+        for (const h of (z.holes || [])) {
+          h.forEach((p,i) => { const q=v.p(p[0],p[1]); i ? g.lineTo(q[0],q[1]) : g.moveTo(q[0],q[1]); }); g.closePath();
+        }
         g.globalAlpha = on ? 0.30 : 0.10;
-        g.fillStyle = PAL[z.ci % PAL.length]; g.fill();
+        g.fillStyle = PAL[z.ci % PAL.length]; g.fill("evenodd");
         g.globalAlpha = on ? 0.95 : 0.30;
         g.strokeStyle = PAL[z.ci % PAL.length]; g.lineWidth = on ? 2.4 : 1; g.stroke();
       }
@@ -1679,7 +1682,7 @@ class Component extends DCLogic {
       for (const z of this._hulls) {
         // smallest containing zone wins: nested gardens sit inside bigger hulls,
         // so first-match would always hand back the sprawling neighbour
-        if (!INERT[z.id] && this.inside(X, Y, z.hull) && (!hit || z.area < hit.area)) hit = z;
+        if (!INERT[z.id] && this.inside(X, Y, z.hull) && !(z.holes || []).some(h => this.inside(X, Y, h)) && (!hit || z.area < hit.area)) hit = z;
       }
     }
     const cur = this.state.garden;
@@ -1905,7 +1908,7 @@ class Component extends DCLogic {
       if (tg && !SPOT_XY[tg]) tg = "녹지대";
       if (!tg && this._hulls) {
         let hit = null;
-        for (const z of this._hulls) if (this.inside(tRow[0], tRow[1], z.hull) && (!hit || z.area < hit.area)) hit = z;
+        for (const z of this._hulls) if (this.inside(tRow[0], tRow[1], z.hull) && !(z.holes || []).some(h => this.inside(tRow[0], tRow[1], h)) && (!hit || z.area < hit.area)) hit = z;
         if (hit) tg = hit.id;
       }
       // 대장 원본 번호는 GUID라 관람객에게 보일 값이 아니다 — 수종 내 순번으로 바꿔 쓴다
