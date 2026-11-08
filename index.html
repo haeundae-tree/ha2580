@@ -28,6 +28,7 @@
 <x-dc>
 <helmet>
 <script src="data/trees.js"></script>
+<script src="data/zones.js"></script>
 <script src="data/공사중구역.js"></script>
 <script src="data/bloom-survey.js"></script>
 <script src="data/bloom-guide.js"></script>
@@ -296,7 +297,9 @@
           <div style="display: flex; flex-direction: column;">
             <div style="padding: 20px 20px 10px; display: flex; flex-direction: column; gap: 8px;">
               <div style="{{ nameStyle }}">{{ gd.name }}</div>
-              <div style="font-size: 16px; line-height: 1.65; color: #253128; text-wrap: pretty;">{{ gd.desc }}</div>
+              <sc-if value="{{ gd.desc }}" hint-placeholder-val="{{ true }}">
+                <div style="font-size: 16px; line-height: 1.65; color: #253128; text-wrap: pretty;">{{ gd.desc }}</div>
+              </sc-if>
             </div>
             <div style="padding: 4px 20px 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
               <sc-for list="{{ gd.stats }}" as="s" hint-placeholder-count="2">
@@ -425,20 +428,20 @@ const PAL = ["#2F7D6E","#C98A2B","#5E9B3A","#B85C7A","#4E7FBF","#A25FB5","#C2673
 // 2026-03 registry, which was drawn up before the park was re-divided.
 const SPOTS = [
   { id: "재배장", name: "재배장", src: "재배장", x: .195, y: .246 },
-  // 과수원 옆 재배장은 과수원·은사시원과 함께 2026년 공사 구역 — 왼쪽 재배장과 따로 눌리게 이름을 나눈다
-  { id: "재배장(조성 중)", name: "은사시원", src: "재배장", x: .365, y: .181 },
+  // 재배장(동쪽)·과수원·은사시원 부지는 은사시원 하나(2026-11-02 사용자). 안내도 글자 세 곳이 모두 은사시원으로 눌린다.
+  // src는 QGIS 경계 이름 — 2026-11-08부터 나무 구역은 QGIS 경계 이름을 그대로 쓴다(tools/fill_zones.py)
+  { id: "은사시원", name: "은사시원", src: "은사시원", x: .537, y: .159 },
+  { id: "은사시원", name: "은사시원", src: "은사시원", x: .365, y: .181 },
   { id: "편백숲", name: "편백숲", src: "편백숲", x: .255, y: .256 },
   { id: "침엽수원", name: "침엽수원", src: "침엽수원", x: .365, y: .243 },
-  // 재배장(조성 중)·과수원·은사시원 부지는 은사시원 하나로 부른다(2026-11-02 사용자) — id는 자료 연결용으로 둔다
-  { id: "과수원", name: "은사시원", src: "과수원", x: .421, y: .166 },
-  { id: "은사시원", name: "은사시원", src: "봄꽃원", x: .537, y: .159 },
+  { id: "은사시원", name: "은사시원", src: "은사시원", x: .421, y: .166 },
   // 가족마당 남쪽 재배장은 2026년 공사로 동물원이 되었다 — 대장의 재배장 나무 중 이쪽에 가까운 것은 동물원으로 센다
   { id: "동물원", name: "동물원", src: "재배장", x: .821, y: .240 },
   { id: "가족마당", name: "가족마당", src: "가족마당", x: .752, y: .287 },
   { id: "생명의숲", name: "생명의 숲", src: "생명의숲", x: .443, y: .336 },
-  { id: "무궁화동산", name: "무궁화동산", src: "봄꽃원", x: .542, y: .296 },
+  { id: "무궁화동산", name: "무궁화동산", src: "무궁화동산", x: .542, y: .296 },
   { id: "어린이놀이원", name: "어린이놀이원", src: "어린이놀이원", x: .666, y: .316 },
-  { id: "엄마의 숲", name: "엄마의 숲", src: "가족마당", x: .786, y: .367 },
+  { id: "엄마의 숲", name: "엄마의 숲", src: "엄마의 숲", x: .786, y: .367 },
   { id: "새소리원", name: "새소리원", src: "새소리원", x: .259, y: .390 },
   { id: "미로원", name: "미로원", src: null, x: .711, y: .376 },
   { id: "암석원", name: "암석원", src: null, x: .470, y: .413 },
@@ -465,20 +468,36 @@ const SPOTS = [
   { id: "난대림원", name: "난대림원", src: "난대림원", x: .275, y: .851 },
   { id: "생태습지원", name: "생태습지원", src: "생태습지원", x: .813, y: .859 },
   { id: "진입광장", name: "진입광장", src: "진입광장", x: .942, y: .900 },
-  // 남쪽 운동시설 부지 주제원(2026-11-04 사용자). 안내도 그림에는 없어 항공사진에서만 보이고 눌린다(aerial)
-  // 가족마당(운동시설)은 수목원 안 가족마당과 다른 곳 — 자료 이름은 따로, 화면 이름은 가족마당
-  { id: "운동시설", name: "운동시설", src: "운동시설", x: 1.1998, y: 0.8443, aerial: true },
-  { id: "꿈의놀이터", name: "꿈의놀이터", src: "꿈의놀이터", x: 1.1588, y: 0.7104, aerial: true },
-  { id: "물의정원", name: "물의정원", src: "물의정원", x: 1.0969, y: 0.6897, aerial: true },
-  { id: "가족마당(운동시설)", name: "가족마당", src: "가족마당(운동시설)", x: 1.209, y: 0.6148, aerial: true },
-  { id: "잔디마당", name: "잔디마당", src: "잔디마당", x: 1.3023, y: 0.64, aerial: true },
-  { id: "파크골프장", name: "파크골프장", src: "파크골프장", x: 1.4082, y: 0.841, aerial: true },
-  { id: "대나무군락지", name: "대나무군락지", src: "대나무군락지", x: 1.4639, y: 0.7265, aerial: true },
-  { id: "만남의 광장", name: "만남의 광장", src: "만남의 광장", x: 1.5391, y: 0.65, aerial: true },
+  // 남쪽 운동시설 부지는 2026-11-08 QGIS 경계를 지웠다 — 새로 그리면 아래에서 표시점이 저절로 생긴다
 ];
+// QGIS에 새로 그린 주제원(위 목록에 없는 경계 이름)은 항공사진 이름표·누르기를 저절로 만든다(2026-11-09).
+// 안내도 그림에는 글자가 없어 항공사진에서만 보인다(aerial). 녹지대·교통섬은 주제원이 아니라 만들지 않는다.
+// 이름표 자리 = 안내도 이름(name_guidemap)이 적힌 조각, 없으면 가장 큰 조각의 가운데
+const NOT_ZONE = { "녹지대": 1, "교통섬": 1 };
+(() => {
+  const known = new Set();
+  for (const s of SPOTS) { known.add(s.id); if (s.src) known.add(s.src); }
+  const best = new Map();
+  for (const z of (window.ZONES || [])) {
+    if (!z.n || NOT_ZONE[z.n] || known.has(z.n) || !z.r || z.r.length < 3) continue;
+    let A = 0, cx = 0, cy = 0;
+    for (let i = 0, j = z.r.length - 1; i < z.r.length; j = i++) {
+      const [x1, y1] = z.r[j], [x2, y2] = z.r[i], c = x1 * y2 - x2 * y1;
+      A += c; cx += (x1 + x2) * c; cy += (y1 + y2) * c;
+    }
+    if (!A) continue;
+    const cand = { x: cx / (3 * A), y: cy / (3 * A), score: (z.g ? 1e9 : 0) + Math.abs(A) / 2 };
+    if (!best.has(z.n) || best.get(z.n).score < cand.score) best.set(z.n, cand);
+  }
+  // 좌표(m) → 안내도 비율 좌표: 아래 toMap의 거꾸로
+  const det = -378.63 * 319.47 - 607.87 * 1017.6;
+  for (const [n, c] of best) {
+    const a = (319.47 * c.x + 607.87 * c.y) / det, b = (1017.6 * c.x - 378.63 * c.y) / det;
+    // 화면 이름은 괄호를 뺀다 — 남쪽 '가족마당(운동시설)'처럼 위쪽 주제원과 이름이 같은 곳은 QGIS에 괄호로 구분해 적는다
+    SPOTS.push({ id: n, name: n.replace(/\s*\(.*\)\s*$/, "") || n, src: n, x: a + 1.655517, y: b + 0.711349, aerial: true, auto: true });
+  }
+})();
 
-// 조성 중 on the drawing — say so rather than describing a planting that isn't there
-const PENDING = { "은사시원": true, "봄꽃원": true };
 // 공사 중인 주제원은 data/공사중구역.js(메모장으로 고치는 이름 목록)에서 읽는다(2026-11-04 사용자).
 // 거기 적힌 주제원은 '조성 중'으로 보이고 공사 전 나무 점은 숨긴다. 공사가 끝나면 그 줄을 지우면 나무가 다시 보인다.
 // 안내도 이름(SPOTS name)이나 id로 적는다 — '은사시원' 한 줄이 은사시원·과수원·재배장(조성 중)을 함께 묶는다
@@ -486,7 +505,8 @@ const PENDING = { "은사시원": true, "봄꽃원": true };
 const BUILDING = new Set(String(window.CONSTRUCTION || "").split(/\r?\n/)
   .map(s => s.trim()).filter(s => s && !s.startsWith("//")));
 const SURVEYING = {};
-for (const s of SPOTS) if (BUILDING.has(s.name) || BUILDING.has(s.id)) SURVEYING[s.id] = "현재 조성 중인 주제원입니다.";
+// 자동으로 만든 주제원(괄호 이름)은 QGIS 이름 그대로 적어야 공사 중이 된다 — 위쪽 '가족마당'을 적어도 아래쪽 '가족마당(운동시설)'은 그대로
+for (const s of SPOTS) if ((!s.auto && BUILDING.has(s.name)) || BUILDING.has(s.id)) SURVEYING[s.id] = "현재 조성 중인 주제원입니다.";
 const isBuilding = id => /조성/.test(SURVEYING[id] || "");
 
 // Illustration position → registry metres, from an affine fitted on 14 labels whose
@@ -501,9 +521,8 @@ const toMap = (u, v) => {
 };
 for (const s of SPOTS) { const p = toMap(s.x, s.y); s.mx = p[0]; s.my = p[1]; }
 
-// One registry garden can now be two labels: 가족마당 was divided into 가족마당 +
-// 엄마의 숲, and the old 봄꽃원 area is now 은사시원 + 무궁화동산. Those trees are
-// split by whichever of the sibling labels they actually sit closest to.
+// 경계 하나를 안내도 이름 둘이 나눠 쓰는 곳(재배장 → 재배장·동물원, 월가든 → 월가든1·2):
+// 그 나무는 더 가까운 이름표로 센다. 나머지는 QGIS 경계 이름이 곧 안내도 이름이다(2026-11-08)
 const SPLIT = {};
 for (const s of SPOTS) if (s.src) (SPLIT[s.src] = SPLIT[s.src] || new Set()).add(s.id);
 for (const k of Object.keys(SPLIT)) {
@@ -536,7 +555,7 @@ const WALK_MIN = { "가을원": "10", "세움정원": "8", "난대림원": "15",
 // 좌표는 나무와 같은 상대 좌표(m). 눌리지 않는다. 리플릿 이름 그대로 — 운동장 동쪽 '가족마당'은 수목원 안 주제원 가족마당과 다른 곳이지만 이름은 리플릿대로(사용자)
 // 가족마당 이름표는 물의정원 위 길 건너 북동쪽 빈 잔디 자리로 옮김(2026-10-29 사용자 항공사진 표시)
 const FAC_LABELS = [["주차장", 115.6, 646.6], ["농구장", -3.9, 637.6], ["족구장", 5.1, 595.8], ["게이트볼장", -0.9, 559.9], ["테니스장", -18.9, 455.4], ["배드민턴장", 5.1, 413.5], ["축구장", 91.7, 506.2], ["풋살장", 97.7, 406.4]];
-// 꿈의놀이터·물의정원·가족마당·잔디마당·파크골프장·대나무군락지·만남의 광장은 2026-11-04부터 주제원(SPOTS, aerial)
+// 남쪽 부지 주제원 경계는 아직 없다(2026-11-08) — 그 나무는 '구역 정리 중'. 위 시설 이름만 항공사진에 글자로 단다
 
 // facilities printed on the 안내도 that belong to a larger garden and carry no
 // records of their own: label them, but don't let a visitor open a dead panel
@@ -549,14 +568,9 @@ const INERT = { "미로원": 1, "동백숲": 1, "암석원": 1 };
 const SPOT_XY = {};
 for (const s of SPOTS) if (!SPOT_XY[s.id]) SPOT_XY[s.id] = [s.mx, s.my];
 
-// 대장에 다른 구역으로 적혔지만 실제로는 안내도의 다른 주제원 안에 있는 나무 — 자리로 옮겨 센다.
-// 세움정원: 새로 찍은 분꽃나무·치자나무·낙상홍 등이 대장에 '운동시설'로 들어가 있다(2026-10-24 사용자 확인).
-// 세움정원 근처에 최근 찍은 '운동시설' 나무 무리(표시점 110m 안, 87주)는 모두 세움정원 나무다(사용자 확인).
-// 세움정원은 가을원 안의 작은 정원이라 은행나무·복자기처럼 가을원 수종도 섞여 있다. QGIS에서 고치면 여기서 지운다
+// 나무 구역은 QGIS 주제원 경계가 정한다(2026-11-08, tools/fill_zones.py). 아래는 경계로 못 가르는 나무 몇 그루만
+// 사용자가 하나씩 정한 예외 — 자리로 옮겨 센다. 새 예외는 되도록 만들지 말고 QGIS 경계를 고친다
 const REMAP = [
-  { from: "운동시설", to: "세움정원", r: 110 },
-  // 세움정원 붉나무 1그루가 대장에 '초식동물원(사계화원)'으로 들어가 있다(2026-10-25 사용자 확인) — 이 나무만 옮긴다
-  { from: "초식동물원", to: "세움정원", r: 60, only: ["붉나무"] },
   // 동백숲: 대장에 구역 없이 위치만 찍힌 동백나무 등(표시점 50m 안 110주). 올해 다시 심는 중이라
   // 안내도에서는 눌리지 않게 두고(INERT), 항공사진·수종 화면에서만 그 자리 나무를 동백숲으로 보여 준다(2026-10-24 사용자)
   { from: null, to: "동백숲", r: 50 },
@@ -569,20 +583,12 @@ const REMAP = [
   { from: "월가든", to: "사계화원", x: 378.4, y: 1072.8, r: 2, only: ["팽나무"] },
   // 동물원 잔디밭 남동쪽 길가 비탈(팽나무 5그루)은 동물원(2026-10-28 사용자)
   { from: "녹지대", to: "동물원", poly: [[610.1, 715.8], [605.8, 704.1], [592.5, 707.6], [579.8, 720.2], [583.2, 729.6], [592.4, 732.9], [601.0, 723.7]] },
-  // 초식동물원은 사계화원이 아니다. 이 면(QField 초식동물원 경계)은 세움정원 자리(2026-11-02 사용자)
-  { from: "초식동물원", to: "세움정원", poly: [[345, 1115], [372, 1110], [400, 1160], [400, 1200], [380, 1200], [355, 1170]] },
-  // 은사시원 부지 안 나무 11그루가 무궁화동산 면에 걸려 있었다 — 은사시원으로 센다(2026-11-01 사용자)
-  { from: "봄꽃원", to: "은사시원", poly: [[702.4, 913.1], [702.8, 889.1], [705.1, 886], [709.9, 882.1], [717.3, 878.6], [744.9, 865.9], [748.5, 870.1], [761.4, 885.3], [766, 891.3], [774.2, 904.3], [780.6, 915.1], [789, 931.1], [803.2, 958.8], [811.1, 975.4], [814.9, 983.5], [820.8, 997.9], [824, 1006.6], [825.2, 1010.9], [812, 1027.4], [805.9, 1033.9], [803.7, 1036.1], [799.3, 1040.6], [796.7, 1042.9], [784.6, 1050.6]] }
 ];
 // 조성 중 부지(2026-11-01 사용자 그림). 이 안은 항공사진에 옅게 덮고 공사 전 나무 점을 숨긴다
 // 북쪽 부지는 재배장·과수원·은사시원을 한 덩어리로 그렸다
 const NORTH_SITE = [[834.9, 1032], [798.1, 948], [780.3, 920.3], [767.1, 894.7], [751, 873.1], [741, 868], [732, 867], [692, 881.6], [676.6, 891], [676, 896], [693.2, 907.6], [730.9, 955.6], [776.6, 1033.4], [801.3, 1109.3], [807, 1138.1], [808.4, 1163.1], [815.1, 1176.1], [850.4, 1173.8], [851, 1150], [850, 1125], [848, 1100], [845, 1075], [841, 1050]];
-// 남쪽 운동시설 부지 주제원 경계(상대 좌표 m). QGIS 주제원 경계(name_guidemap '운동시설 부지')와 같다. 항공사진 누르는 범위로 쓴다
-const SOUTH_ZONES = {"운동시설":[[[43.1,581.8],[35.1,562.8],[29.6,544.3],[26.1,512.8],[27.1,474.3],[31.6,450.3],[39.1,425.8],[49.6,405.8],[57.6,396.3],[80.6,379.3],[93.1,373.8],[114.1,373.3],[131.6,378.8],[145.6,387.3],[156.1,398.3],[165.6,412.8],[169.6,424.3],[173.6,449.8],[169.1,485.8],[167.1,522.8],[165.1,534.3],[161.1,543.8],[149.1,561.3],[136.1,574.3],[114.1,585.8],[102.6,586.8],[93.6,581.3],[74.6,576.3],[62.6,577.3]],[[-20.9,662.3],[-18.9,594.3],[-32.4,514.3],[-41.4,474.3],[-59.4,377.8],[-15.9,370.3],[4.6,363.3],[9.1,365.3],[9.1,362.3],[16.1,361.3],[75.1,360.8],[91.6,361.8],[103.1,364.8],[103.6,366.3],[96.1,366.8],[73.1,375.8],[56.6,388.3],[41.6,405.8],[36.6,415.8],[26.1,442.8],[26.6,445.3],[23.1,455.8],[19.6,496.3],[20.1,519.8],[27.6,559.8],[35.1,580.3],[57.1,629.8],[12.6,646.3]]],"꿈의놀이터":[[[168.1,552.3],[166.6,550.8],[175.6,510.3],[174.1,486.8],[176.1,467.8],[179.6,451.8],[182.1,450.3],[198.1,466.8],[210.1,482.3],[216.1,501.3],[214.1,519.3],[203.6,536.8],[191.1,546.8],[185.6,549.3]]],"물의정원":[[[200.6,637.3],[185.6,597.8],[176.6,581.8],[170.6,584.3],[167.1,567.3],[168.6,557.8],[185.1,553.8],[201.1,545.3],[226.1,515.3],[232.1,498.3],[297.1,494.3],[299.6,512.3],[300.1,532.3],[290.6,547.8],[270.1,561.3],[243.1,582.8],[218.1,612.8],[211.6,624.8]]],"가족마당(운동시설)":[[[220.1,512.3],[220.1,501.3],[216.1,484.8],[206.6,469.8],[180.6,441.3],[175.6,420.8],[166.6,398.3],[185.6,387.8],[201.1,381.3],[220.1,363.3],[231.6,345.3],[235.6,330.3],[238.1,328.8],[252.1,336.3],[280.6,365.3],[285.6,382.3],[285.1,444.3],[297.6,493.3],[232.1,497.8],[227.6,500.3],[224.6,508.3]]],"잔디마당":[[[211.1,365.3],[191.1,378.8],[164.1,391.3],[160.6,390.8],[130.1,370.3],[107.6,366.3],[111.6,270.3],[145.6,280.3],[172.1,282.3],[195.1,295.8],[213.1,309.3],[231.6,316.3],[226.6,340.3],[219.1,355.8]]],"파크골프장":[[[-59.9,377.3],[-63.9,357.8],[-63.9,352.3],[-58.9,346.3],[-57.9,342.8],[-62.4,314.3],[-61.9,300.8],[-57.4,281.3],[-46.9,250.3],[-36.4,233.8],[-27.9,224.3],[-15.9,219.3],[-4.4,219.8],[71.6,244.8],[100.1,249.8],[121.6,257.3],[118.1,268.3],[116.1,270.3],[111.6,269.8],[110.6,272.8],[107.1,365.3],[85.6,360.8],[16.1,360.8]]],"대나무군락지":[[[158.6,258.8],[101.6,242.3],[70.6,236.3],[16.6,218.8],[-6.9,204.8],[-26.4,199.3],[-30.4,184.3],[-27.9,156.8],[-0.4,145.3],[9.6,142.8],[70.6,165.8],[87.6,174.3],[106.6,192.3],[111.6,199.3],[113.6,205.3],[112.6,212.8],[128.1,221.3],[144.6,235.3]]],"만남의 광장":[[[143.1,229.8],[114.6,211.8],[115.6,203.8],[113.6,196.3],[109.6,189.3],[99.1,179.3],[76.1,164.8],[40.1,148.8],[32.6,140.8],[30.6,135.8],[31.6,124.8],[35.6,114.8],[39.1,71.3],[40.6,63.3],[43.6,57.3],[40.1,51.3],[53.1,34.8],[68.1,9.8],[76.1,-0.7],[83.1,-6.2],[88.6,-7.7],[102.1,-4.2],[110.1,-0.2],[111.1,2.3],[110.1,8.8],[97.1,34.8],[86.6,61.3],[85.6,88.3],[90.1,121.8],[99.1,156.8],[115.1,185.8],[122.6,193.8]]]};
-const inSouth = (id, x, y) => (SOUTH_ZONES[id] || []).some(r => inPoly(x, y, r));
+// 봄꽃원 공사 시작선(2026-11-02 사용자 그림) — 주제원 경계와 달리 이 선 안쪽 공사 전 나무만 숨긴다
 const SITE_POLY = {
-  // 사계화원 부지(2026-11-02 사용자 그림)
-  "사계화원": [[441.8, 1044], [398.5, 1056.4], [388.4, 1052.9], [379.5, 1052.8], [375.2, 1049.2], [370.5, 1050.1], [374, 1059.8], [373.5, 1065.5], [382.4, 1089.8], [390.5, 1104.1], [406.6, 1147], [409.5, 1175.9], [412.5, 1186.7], [409, 1195.6], [412.8, 1206], [419.7, 1208.6], [431.8, 1205.9], [443.2, 1208.1], [449.8, 1214.6], [456.1, 1225], [461.9, 1229.2], [464.9, 1235.3], [473.2, 1238.2], [474.8, 1238.0], [484.1, 1225.4], [484.9, 1210.7], [477.1, 1192.8], [479.1, 1185.2], [478.0, 1170.0], [471.2, 1145.7], [451.3, 1126.2], [443.0, 1107.9], [447.2, 1091.7], [453.5, 1080.8], [455.7, 1068.2], [453.0, 1056.8], [446.0, 1043.8]],
   "봄꽃원": [[368.5, 940.3], [366.3, 937], [322, 929.5], [309, 926.5], [287.9, 916.1], [281.8, 905.1], [275.7, 899.7], [271.8, 888.9], [269.6, 868.8], [255.4, 832.7], [252.4, 827.1], [240.8, 817.6], [237.2, 807.7], [233.7, 803.4], [196.5, 839.8], [203.2, 844.5], [217.2, 857.8], [226, 873.5], [234.6, 897.3], [247.6, 916], [257.4, 922.1], [275.5, 941], [303, 960.6], [346.9, 983.3], [351.6, 976.5], [357.7, 961], [367.9, 952.7], [366.9, 944.4]]
 };
 for (const m of REMAP) if (m.x == null && !m.ring && !m.poly) { const p = SPOT_XY[m.to]; m.x = p[0]; m.y = p[1]; }
@@ -613,14 +619,6 @@ function zoneOf(gardens, r) {
   return r[2] >= 0 ? labelFor(gardens[r[2]], r[0], r[1]) : null;
 }
 
-// 둘로 나눈 주제원 중 경계를 직접 그린 곳 — 이 면 안의 나무는 가까운 이름표와 상관없이 이 주제원(상대 좌표 m)
-// 엄마의 숲: 동물원 아래(놀이터 우산)에서 가족마당 연못 가장자리 길을 따라 큰길까지, 그 남쪽·서쪽(2026-10-27·28 사용자 그림)
-// 사용자가 그린 구역 그림은 바탕화면 해운대수목원\구역나눔_사용자그림_2026.10.27.webp
-const SPLIT_POLY = {
-  "가족마당": { polys: [["엄마의 숲", [[430,690],[430,800],[503,802],[518,807],[533,812],[556,819],[561,816],[566,800],[578,775],[588,766],[600,760.5],[621.7,755.8],[630,742],[618,700]]]], rest: "가족마당" },
-  // 무궁화동산: 두 큰길 사이 물길 띠까지 무궁화동산, 바깥 큰길 너머만 은사시원(2026-10-27 사용자 그림). 면 밖은 가까운 이름표
-  "봄꽃원": { polys: [["무궁화동산", [[613.2,1070.9],[732.3,1077.8],[775.7,1057.7],[769.3,1014.0],[752.1,976.0],[729.6,946.3],[666.7,955.8],[642.1,957.9],[617.8,973.2],[598.4,1017.5]]]], rest: null }
-};
 // 공사 부지 그림 — 공사중구역.js에 그 이름이 있을 때만 그 안의 공사 전 나무 점을 숨긴다
 const SITE_AREAS = [BUILDING.has("은사시원") && NORTH_SITE, BUILDING.has("봄꽃원") && SITE_POLY["봄꽃원"]].filter(Boolean);
 const inPoly = (x, y, ring) => {
@@ -631,17 +629,12 @@ const inPoly = (x, y, ring) => {
   }
   return ok;
 };
-const splitPoly = (garden, x, y) => {
-  const sp = SPLIT_POLY[garden]; if (!sp) return null;
-  for (const [id, ring] of sp.polys) if (inPoly(x, y, ring)) return id;
-  return sp.rest;                   // 그린 면 밖 — 정한 주제원, null이면 가까운 이름표로
-};
 
 // registry garden + position → the 안내도 label it now belongs to
 function labelFor(garden, x, y) {
   const re = REMAP_AT.get(x + "," + y); if (re) return re;
-  if (garden === "운동시설" && !inSouth("운동시설", x, y)) return "녹지대";
-  const pl = splitPoly(garden, x, y); if (pl) return pl;
+  // QGIS 경계 이름이 곧 안내도 이름이면 그대로. 한 경계를 안내도 이름 둘이 나눠 쓰는 곳(재배장 → 재배장·동물원)만 가까운 이름표로
+  if (SPOT_XY[garden] && !SPLIT[garden]) return garden;
   const group = SPLIT[garden];
   if (group) {
     let best = group[0], bd = Infinity;
@@ -896,8 +889,22 @@ class Component extends DCLogic {
     this._ptsById = groups;
     const out = [];
     const seen = new Map();
+    // QGIS 주제원 경계(data/zones.js)가 있으면 그 선이 곧 테두리·누르는 범위다(2026-11-08)
+    if (Array.isArray(window.ZONES) && window.ZONES.length) {
+      for (const z of window.ZONES) {
+        const hull = z.r; if (!hull || hull.length < 3) continue;
+        let cx = 0, cy = 0, a = 0;
+        for (const p of hull) { cx += p[0]; cy += p[1]; }
+        const id = labelFor(z.n, cx / hull.length, cy / hull.length);
+        if (!SPOT_XY[id]) continue;          // 녹지대·교통섬처럼 안내도에 없는 이름은 테두리를 안 그린다
+        for (let i = 0, j = hull.length - 1; i < hull.length; j = i++) a += hull[j][0] * hull[i][1] - hull[i][0] * hull[j][1];
+        const ci = seen.has(id) ? seen.get(id) : (seen.set(id, seen.size), seen.get(id));
+        out.push({ id, hull, n: (groups.get(id) || []).length, ci, area: Math.abs(a) / 2 });
+      }
+      return out.sort((a, b) => b.n - a.n);
+    }
+    // 경계 자료가 없을 때만: 나무 무리를 감싸 테두리를 만든다(예전 방식)
     for (const [id, all] of groups) {
-      if (SOUTH_ZONES[id]) continue;   // 아래에서 그린 경계로 넣는다
       if (all.length < 8) continue;
       // 난대림원·장미원·가을원 등은 안내도에 두 곳으로 나뉘어 있다. 한 덩어리로 감싸면
       // 두 패치 사이의 무관한 땅까지 폴리곤이 덮으므로, 붙어 있는 무리별로 나눈다
@@ -909,23 +916,13 @@ class Component extends DCLogic {
         const mu = ds.reduce((a, b) => a + b, 0) / ds.length;
         const sd = Math.sqrt(ds.reduce((a, b) => a + (b - mu) ** 2, 0) / ds.length);
         const keep = pts.filter((p, i) => ds[i] <= mu + 2.2 * sd);
-        const hull = SITE_POLY[id] || this.hull(keep.length > 6 ? keep : pts);
+        const hull = this.hull(keep.length > 6 ? keep : pts);
         if (hull.length < 3) continue;
         let a = 0;
         for (let i = 0, j = hull.length - 1; i < hull.length; j = i++)
           a += hull[j][0] * hull[i][1] - hull[i][0] * hull[j][1];
         const ci = seen.has(id) ? seen.get(id) : (seen.set(id, seen.size), seen.get(id));
         out.push({ id, hull, n: all.length, ci, area: Math.abs(a) / 2 });
-      }
-    }
-    // 남쪽 운동시설 부지 주제원 — QGIS 경계를 그대로 누르는 범위로(2026-11-04)
-    for (const [id, rings] of Object.entries(SOUTH_ZONES)) {
-      const n = (groups.get(id) || []).length;
-      const ci = seen.has(id) ? seen.get(id) : (seen.set(id, seen.size), seen.get(id));
-      for (const hull of rings) {
-        let a = 0;
-        for (let i = 0, j = hull.length - 1; i < hull.length; j = i++) a += hull[j][0] * hull[i][1] - hull[i][0] * hull[j][1];
-        out.push({ id, hull, n, ci, area: Math.abs(a) / 2 });
       }
     }
     return out.sort((a, b) => b.n - a.n);
@@ -1747,35 +1744,10 @@ class Component extends DCLogic {
   rowsFor(id) {
     const d = this.state.data;
     if (!d || SURVEYING[id]) return [];
-    // 자리로 옮겨 세는 주제원(REMAP)은 labelFor 결과로 바로 모은다
-    if (REMAP.some(m => m.to === id || m.from === id || m.from === "*")) {
-      this._rowsCache = this._rowsCache && this._rowsCache.d === d ? this._rowsCache : { d, m: {} };
-      return this._rowsCache.m[id] || (this._rowsCache.m[id] = d.d.filter(r =>
-        r[0] != null && zoneOf(d.gardens, r) === id));
-    }
-    const sibs = Object.keys(SPLIT).find(k => SPLIT[k].some(s => s.id === id));
-    if (sibs) {
-      const gi = d.gardens.indexOf(sibs);
-      if (gi < 0) return [];
-      const group = SPLIT[sibs];
-      return d.d.filter(r => {
-        if (r[2] !== gi || r[0] == null) return false;
-        const pl = splitPoly(sibs, r[0], r[1]); if (pl) return pl === id;
-        let best = group[0], bd = Infinity;
-        for (const s of group) {
-          const dd = (r[0] - s.mx) ** 2 + (r[1] - s.my) ** 2;
-          if (dd < bd) { bd = dd; best = s; }
-        }
-        return best.id === id;
-      });
-    }
-    // a renamed label (허브길 ← 허브원, 봄꽃원 ← 고사식물덩굴원) must resolve through src,
-    // never through its own name — the registry still holds a stale record under it
-    const sp = SPOTS.find(s => s.id === id);
-    const src = sp ? sp.src : id;
-    if (!src) return [];
-    const gi = d.gardens.indexOf(src), gi2 = src !== id ? d.gardens.indexOf(id) : -1;
-    return gi >= 0 || gi2 >= 0 ? d.d.filter(r => (r[2] === gi || r[2] === gi2) && r[0] != null) : [];
+    // 나무 한 그루마다 zoneOf(경계 이름 → 안내도 이름)로 센다 — 화면 이름표·항공사진·수종 화면이 같은 답을 낸다
+    this._rowsCache = this._rowsCache && this._rowsCache.d === d ? this._rowsCache : { d, m: {} };
+    return this._rowsCache.m[id] || (this._rowsCache.m[id] = d.d.filter(r =>
+      r[0] != null && zoneOf(d.gardens, r) === id));
   }
 
   // which 안내도 label a single tree now falls under
@@ -1947,7 +1919,8 @@ class Component extends DCLogic {
         garden: tg || "녹지대",
         sameN: same ? same.toLocaleString() + unitOf(tname) : "기록 정리 중",
         facts: [
-          { k: "주제원", v: tg || "녹지대" },
+          // 주제원 칸이 빈 나무(경계 없는 남쪽 부지)는 이 줄을 아예 안 보인다(2026-11-09 사용자). QGIS에 경계를 그리면 저절로 나온다
+          ...(tg ? [{ k: "주제원", v: tg }] : []),
           { k: "과", v: e.fam || "—" },
           { k: "안내소에서", v: "도보 " + this.walkFor(tg, tRow[0], tRow[1]) }
         ],
@@ -2162,10 +2135,8 @@ class Component extends DCLogic {
         desc: all
           ? "주제원을 눌러 그 구역의 안내를 보세요. 같은 주제원을 다시 누르면 이 화면으로 돌아옵니다."
           // 조사 중인 주제원은 이 한 줄만 보인다 — 소개·볼거리·빈 목록 안내를 겹쳐 띄우지 않는다
-          : SURVEYING[name] ? SURVEYING[name]
-          : (PENDING[name] ? "안내도에 조성 중으로 표시된 곳. " : "")
-            // 한 구역을 둘로 나눈 곳(월가든1·2)은 원래 구역의 소개를 같이 쓴다
-            + (info.GARDEN_INFO[name] || info.GARDEN_INFO[(SPOTS.find(s => s.id === name) || {}).src] || "수목원을 이루는 곳."),
+          // 주제원 소개말은 쓰지 않는다(2026-11-09 사용자) — 공사 중(공사중구역.js)일 때만 그 한 줄
+          : SURVEYING[name] || "",
         // 전체 화면에는 그루 수를 보이지 않는다 — 전시원을 골랐을 때만 보인다
         stats: [
           ...(all ? [] : [{ k: "등록 수목", v: rows.length ? rows.filter(r => !(this._roseOf && this._roseOf.has(r))).length.toLocaleString() + "주" : (d ? (/조성/.test(SURVEYING[name] || "") ? "조성 중" : "조사 중") : "…") }]),
