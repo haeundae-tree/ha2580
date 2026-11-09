@@ -506,8 +506,9 @@ const BUILDING = new Set(String(window.CONSTRUCTION || "").split(/\r?\n/)
   .map(s => s.trim()).filter(s => s && !s.startsWith("//")));
 const SURVEYING = {};
 // 자동으로 만든 주제원(괄호 이름)은 QGIS 이름 그대로 적어야 공사 중이 된다 — 위쪽 '가족마당'을 적어도 아래쪽 '가족마당(운동시설)'은 그대로
-for (const s of SPOTS) if ((!s.auto && BUILDING.has(s.name)) || BUILDING.has(s.id)) SURVEYING[s.id] = "현재 조성 중인 주제원입니다.";
-const isBuilding = id => /조성/.test(SURVEYING[id] || "");
+for (const s of SPOTS) if ((!s.auto && BUILDING.has(s.name)) || BUILDING.has(s.id)) SURVEYING[s.id] = "조성 공사 중이라 실제 나무와 다를 수 있어요.";
+// 공사 중 주제원도 나무 점은 숨기지 않는다(2026-11-09 연구사님) — 위 안내 문구만 단다
+const NO_ROWS = new Set();
 
 // Illustration position → registry metres, from an affine fitted on 14 labels whose
 // area kept both its name and its shape (residual under 5 m across the park).
@@ -584,13 +585,7 @@ const REMAP = [
   // 동물원 잔디밭 남동쪽 길가 비탈(팽나무 5그루)은 동물원(2026-10-28 사용자)
   { from: "녹지대", to: "동물원", poly: [[610.1, 715.8], [605.8, 704.1], [592.5, 707.6], [579.8, 720.2], [583.2, 729.6], [592.4, 732.9], [601.0, 723.7]] },
 ];
-// 조성 중 부지(2026-11-01 사용자 그림). 이 안은 항공사진에 옅게 덮고 공사 전 나무 점을 숨긴다
-// 북쪽 부지는 재배장·과수원·은사시원을 한 덩어리로 그렸다
-const NORTH_SITE = [[834.9, 1032], [798.1, 948], [780.3, 920.3], [767.1, 894.7], [751, 873.1], [741, 868], [732, 867], [692, 881.6], [676.6, 891], [676, 896], [693.2, 907.6], [730.9, 955.6], [776.6, 1033.4], [801.3, 1109.3], [807, 1138.1], [808.4, 1163.1], [815.1, 1176.1], [850.4, 1173.8], [851, 1150], [850, 1125], [848, 1100], [845, 1075], [841, 1050]];
-// 봄꽃원 공사 시작선(2026-11-02 사용자 그림) — 주제원 경계와 달리 이 선 안쪽 공사 전 나무만 숨긴다
-const SITE_POLY = {
-  "봄꽃원": [[368.5, 940.3], [366.3, 937], [322, 929.5], [309, 926.5], [287.9, 916.1], [281.8, 905.1], [275.7, 899.7], [271.8, 888.9], [269.6, 868.8], [255.4, 832.7], [252.4, 827.1], [240.8, 817.6], [237.2, 807.7], [233.7, 803.4], [196.5, 839.8], [203.2, 844.5], [217.2, 857.8], [226, 873.5], [234.6, 897.3], [247.6, 916], [257.4, 922.1], [275.5, 941], [303, 960.6], [346.9, 983.3], [351.6, 976.5], [357.7, 961], [367.9, 952.7], [366.9, 944.4]]
-};
+
 for (const m of REMAP) if (m.x == null && !m.ring && !m.poly) { const p = SPOT_XY[m.to]; m.x = p[0]; m.y = p[1]; }
 // 나무 자리(좌표) → 옮겨 셀 주제원. 자료를 읽을 때 한 번 만든다(buildRemap)
 let REMAP_AT = new Map();
@@ -619,8 +614,6 @@ function zoneOf(gardens, r) {
   return r[2] >= 0 ? labelFor(gardens[r[2]], r[0], r[1]) : null;
 }
 
-// 공사 부지 그림 — 공사중구역.js에 그 이름이 있을 때만 그 안의 공사 전 나무 점을 숨긴다
-const SITE_AREAS = [BUILDING.has("은사시원") && NORTH_SITE, BUILDING.has("봄꽃원") && SITE_POLY["봄꽃원"]].filter(Boolean);
 const inPoly = (x, y, ring) => {
   let ok = false;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
@@ -1154,19 +1147,8 @@ class Component extends DCLogic {
     return pick;
   }
 
-  // 항공사진에서 숨기는 나무: 조성 중 부지 안, 재배장·과수원·은사시원·봄꽃원으로 잡힌 나무,
-  // 과수원 위쪽 길가 메타세쿼이아(2026-11-01 사용자)
-  buildingRows(d) {
-    if (this._buildingOf !== d) {
-      this._buildingOf = d;
-      const meta = d.names.indexOf("메타세쿼이아");
-      this._buildingRows = new Set(d.d.filter(r => r[0] != null && (
-        // 봄꽃원은 공사 시작선 안쪽만 숨긴다(2026-11-02 사용자)
-        SITE_AREAS.some(a => inPoly(r[0], r[1], a)) || (isBuilding(zoneOf(d.gardens, r)) && zoneOf(d.gardens, r) !== "봄꽃원")
-        || (BUILDING.has("은사시원") && r[3] === meta && r[0] >= 835 && r[1] >= 1000 && r[1] <= 1135))));
-    }
-    return this._buildingRows;
-  }
+  // 숨기는 나무 없음 — 공사 중 주제원도 점을 보이고 안내 문구만 단다(2026-11-09 연구사님)
+  buildingRows() { return NO_ROWS; }
 
   // what the satellite view highlights right now (distinct from rowsFor(id))
   visibleRows() {
@@ -1602,7 +1584,8 @@ class Component extends DCLogic {
       const queue = this._satLabels.slice()
         .sort((a, b) => (b.id === sel) - (a.id === sel) || b.n - a.n);
       for (const z of queue) {
-        const name = isBuilding(z.id) ? z.name + " (조성 중)" : z.name;
+        // 항공사진 이름표에는 「(조성 중)」을 붙이지 않는다(2026-11-09 사용자) — 누르면 안내 칸에 조성 중이라고 나온다
+        const name = z.name;
         const cx = z.cx, cy = z.cy;
         const q = v.p(cx, cy), x = q[0];
         let y = q[1];
@@ -1746,7 +1729,7 @@ class Component extends DCLogic {
   // trees belonging to an 안내도 label, honouring the re-divided areas
   rowsFor(id) {
     const d = this.state.data;
-    if (!d || SURVEYING[id]) return [];
+    if (!d) return [];
     // 나무 한 그루마다 zoneOf(경계 이름 → 안내도 이름)로 센다 — 화면 이름표·항공사진·수종 화면이 같은 답을 낸다
     this._rowsCache = this._rowsCache && this._rowsCache.d === d ? this._rowsCache : { d, m: {} };
     return this._rowsCache.m[id] || (this._rowsCache.m[id] = d.d.filter(r =>
@@ -1775,7 +1758,7 @@ class Component extends DCLogic {
     const d = this.state.data;
     if (!d) return null;
     const L = zoneOf(d.gardens, r);
-    return !L || SURVEYING[L] ? null : L;
+    return L || null;
   }
 
   _ph = {};
@@ -1924,6 +1907,7 @@ class Component extends DCLogic {
         facts: [
           // 주제원 칸이 빈 나무(경계 없는 남쪽 부지)는 이 줄을 아예 안 보인다(2026-11-09 사용자). QGIS에 경계를 그리면 저절로 나온다
           ...(tg ? [{ k: "주제원", v: tg }] : []),
+          ...(tg && SURVEYING[tg] ? [{ k: "안내", v: "조성 공사 중 — 실제와 다를 수 있음" }] : []),
           { k: "과", v: e.fam || "—" },
           { k: "안내소에서", v: "도보 " + this.walkFor(tg, tRow[0], tRow[1]) }
         ],
@@ -2148,7 +2132,7 @@ class Component extends DCLogic {
         // never claim a surveyed garden is unsurveyed while the file is still loading
         // 조사표가 로드되면 달 선택은 항상 보인다 — 이 정원에 그 달 기록이 없어도
         // 다른 달로 넘길 수단이 있어야 한다
-        hasCal: have.length > 0 && !SURVEYING[name],
+        hasCal: have.length > 0,
         hasNow: now.length > 0,
         noNow: have.length > 0 && now.length === 0,
         noNowNote: mo + "월에는 이곳에서 소개할 꽃·열매·단풍이 없어요. 다른 달을 눌러 보세요.",
